@@ -43,9 +43,30 @@ class DataProcessor:
             # Backward fill any remaining missing values at the start
             df = df.bfill()
 
-            print("\nColumn info after conversion:")
+            # Drop columns with too many missing values (>30%)
+            threshold = len(df) * 0.3
+            columns_to_drop = df.columns[df.isna().sum() > threshold]
+            if len(columns_to_drop) > 0:
+                print(f"\nDropping columns with >30% missing values: {list(columns_to_drop)}")
+                df = df.drop(columns=columns_to_drop)
+
+            # Keep only relevant features (technical indicators and key commodities)
+            relevant_columns = ['Close', 'Open', 'High', 'Low', 'Volume',
+                              'Gold', 'Silver', 'Platinum',
+                              'Total Index', 'Energy', 'Non-energy',
+                              'Precious Metals', 'Base Metals',
+                              'MACD Line', 'RSI Daily Gain', 'RSI Daily Loss']
+
+            existing_columns = [col for col in relevant_columns if col in df.columns]
+            df = df[existing_columns]
+
+            print("\nColumn info after cleaning:")
             for col in df.columns:
                 print(f"{col}: {df[col].dtype}, NaN count: {df[col].isna().sum()}")
+
+            if df.isna().any().any():
+                problematic_cols = df.columns[df.isna().any()].tolist()
+                raise ValueError(f"Still have missing values in columns: {problematic_cols}")
 
             return df
 
@@ -56,10 +77,9 @@ class DataProcessor:
     def prepare_data(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
         """Prepare features and target variables."""
         try:
-            # Print data info for debugging
             print("\nPreparing data:")
             print(f"Total columns: {len(df.columns)}")
-            print(f"Numeric columns: {len(df.select_dtypes(include=[np.number]).columns)}")
+            print(f"Available columns: {df.columns.tolist()}")
 
             # Ensure 'Close' column exists
             if 'Close' not in df.columns:
@@ -75,10 +95,13 @@ class DataProcessor:
             invalid_y = np.isnan(y).sum()
 
             if invalid_X > 0 or invalid_y > 0:
-                print(f"\nInvalid values found:")
-                print(f"Features (X): {invalid_X} invalid values")
-                print(f"Target (y): {invalid_y} invalid values")
-                raise ValueError(f"Dataset contains missing or invalid values: {invalid_X} in features, {invalid_y} in target")
+                print("\nDetailed feature validation:")
+                feature_names = numeric_df.drop('Close', axis=1).columns
+                for i, col in enumerate(feature_names):
+                    nan_count = np.isnan(X[:, i]).sum()
+                    if nan_count > 0:
+                        print(f"Column '{col}' has {nan_count} invalid values")
+                raise ValueError(f"Dataset contains invalid values: {invalid_X} in features, {invalid_y} in target")
 
             print(f"\nFinal data shape:")
             print(f"X shape: {X.shape}")
