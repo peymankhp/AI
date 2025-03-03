@@ -89,18 +89,14 @@ class GoldPricePredictor:
 
         self.model.eval()
         X_scaled = self.scaler_X.transform(X)
+        predictions = np.full(len(X), np.nan)  # Initialize with NaN
 
-        # Prepare sequences for prediction
-        predictions = []
+        # Generate predictions for each sequence
         for i in range(len(X_scaled) - seq_length):
             X_seq = torch.FloatTensor(X_scaled[i:i + seq_length]).unsqueeze(0)
             with torch.no_grad():
                 pred = self.model(X_seq)
                 pred = self.scaler_y.inverse_transform(pred.numpy())
-                predictions.append(pred[0][0])
+                predictions[i + seq_length] = pred[0][0]
 
-        # Pad the beginning with NaN values to match input length
-        padding = [np.nan] * seq_length
-        predictions = padding + predictions
-
-        return np.array(predictions)
+        return predictions

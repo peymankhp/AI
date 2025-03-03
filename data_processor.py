@@ -121,15 +121,15 @@ class DataProcessor:
         """Calculate performance metrics."""
         from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
-        # Handle NaN values in predictions
-        mask = ~np.isnan(y_pred)
-        y_true = y_true[mask]
-        y_pred = y_pred[mask]
+        # Only calculate metrics on non-NaN values
+        valid_indices = ~np.isnan(y_pred)
+        y_true_valid = y_true[valid_indices]
+        y_pred_valid = y_pred[valid_indices]
 
         metrics = {
-            'RMSE': np.sqrt(mean_squared_error(y_true, y_pred)),
-            'MAE': mean_absolute_error(y_true, y_pred),
-            'R2': r2_score(y_true, y_pred)
+            'RMSE': np.sqrt(mean_squared_error(y_true_valid, y_pred_valid)),
+            'MAE': mean_absolute_error(y_true_valid, y_pred_valid),
+            'R2': r2_score(y_true_valid, y_pred_valid)
         }
 
         return metrics
