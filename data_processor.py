@@ -24,7 +24,7 @@ class DataProcessor:
             for col in df.columns:
                 print(f"{col}: {df[col].dtype}, NaN count: {df[col].isna().sum()}")
 
-            # Convert all numeric columns from European format (comma) to standard format (dot)
+            # Convert numeric columns from European format (comma) to standard format (dot)
             numeric_columns = df.select_dtypes(include=['object']).columns
             for col in numeric_columns:
                 try:
@@ -57,6 +57,7 @@ class DataProcessor:
                               'Precious Metals', 'Base Metals',
                               'MACD Line', 'RSI Daily Gain', 'RSI Daily Loss']
 
+            # Keep only columns that exist in the dataset
             existing_columns = [col for col in relevant_columns if col in df.columns]
             df = df[existing_columns]
 
@@ -107,6 +108,9 @@ class DataProcessor:
             print(f"X shape: {X.shape}")
             print(f"y shape: {y.shape}")
 
+            if len(X) != len(y):
+                raise ValueError(f"Inconsistent number of samples: X has {len(X)}, y has {len(y)}")
+
             return X, y
 
         except Exception as e:
@@ -116,6 +120,11 @@ class DataProcessor:
     def calculate_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, float]:
         """Calculate performance metrics."""
         from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+
+        # Handle NaN values in predictions
+        mask = ~np.isnan(y_pred)
+        y_true = y_true[mask]
+        y_pred = y_pred[mask]
 
         metrics = {
             'RMSE': np.sqrt(mean_squared_error(y_true, y_pred)),
