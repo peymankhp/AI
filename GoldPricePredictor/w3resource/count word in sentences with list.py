@@ -1,0 +1,10 @@
+sentences=input('Enter your sentences: ')
+count=[1,1,1,1,1]
+count[0]=sentences.count('i')
+count[1]=sentences.count('u')
+count[2]=sentences.count('o')
+count[3]=sentences.count('e')
+count[4]=sentences.count('a')
+count.sort()
+print('i count:',count[0],'u count:',count[1],'o count:',count[2],'e count:',count[3],'a count:',count[4])
+print(count[-1])

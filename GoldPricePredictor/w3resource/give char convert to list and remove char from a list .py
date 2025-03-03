@@ -1,0 +1,5 @@
+values = (input("Input some char : "))
+a=values.split()
+print(a)
+print(a.pop(2))
+print(a)
